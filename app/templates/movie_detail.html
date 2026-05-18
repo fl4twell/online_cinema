@@ -1,0 +1,297 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row">
+    <div class="col-12 mb-4" id="player-section">
+        {% if movie.folder_id %}
+        <div class="video-container" id="movie-player">
+            <iframe src="https://drive.google.com/file/d/{{ movie.folder_id }}/preview"
+                    allow="autoplay" allowfullscreen
+                    style="border-radius: 10px; border: none; width: 100%; height: 100%;">
+            </iframe>
+        </div>
+        <div class="video-container d-none" id="trailer-player">
+            <iframe src="https://drive.google.com/file/d/{{ movie.trailer_id }}/preview"
+                    allow="autoplay" allowfullscreen
+                    style="border-radius: 10px; border: none; width: 100%; height: 100%;">
+            </iframe>
+        </div>
+        {% else %}
+        <div class="player-placeholder">
+            <div class="player-content">
+                <div class="play-icon">▶</div>
+                <h3>{{ movie.title }}</h3>
+                <p class="text-muted">Видео пока недоступно</p>
+                <div class="progress-placeholder mt-3">
+                    <div class="progress" style="height: 5px;">
+                        <div class="progress-bar" style="width: 0%; background-color: #8B7355;"></div>
+                    </div>
+                    <div class="d-flex justify-content-between mt-1">
+                        <small class="text-muted">0:00</small>
+                        <small class="text-muted">2:30:00</small>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+        
+        {% if movie.folder_id and movie.trailer_id %}
+        <div class="text-center mt-3">
+            <button class="btn btn-outline-light me-2 active" id="btn-movie" onclick="switchPlayer('movie')" style="background-color: #8B7355; border-color: #8B7355;">
+                <i class="bi bi-film"></i> Фильм
+            </button>
+            <button class="btn btn-outline-light" id="btn-trailer" onclick="switchPlayer('trailer')">
+                <i class="bi bi-play-circle"></i> Трейлер
+            </button>
+        </div>
+        {% endif %}
+    </div>
+    
+    <div class="col-md-8">
+        <h2>{{ movie.title }}</h2>
+        <div class="movie-meta mb-3">
+            {% if movie.year %}
+            <span class="badge bg-secondary me-2">{{ movie.year }}</span>
+            {% endif %}
+            {% if movie.genre %}
+            <a href="{{ url_for('main.by_genre', genre_name=movie.genre) }}" class="badge bg-warning text-dark text-decoration-none me-2">{{ movie.genre }}</a>
+            {% endif %}
+            {% if movie.rating > 0 %}
+            <span class="badge bg-success me-2">★ {{ movie.rating }}</span>
+            {% endif %}
+            {% if movie.category %}
+            <span class="badge bg-info text-dark">{{ movie.category }}</span>
+            {% endif %}
+        </div>
+        
+        <div class="card mb-3">
+            <div class="card-body">
+                <h5>Описание</h5>
+                <p class="card-text">{{ movie.description or 'Описание пока отсутствует.' }}</p>
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5>Детали</h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2"><strong>Название:</strong> {{ movie.title }}</li>
+                    {% if movie.year %}
+                    <li class="mb-2"><strong>Год выхода:</strong> {{ movie.year }}</li>
+                    {% endif %}
+                    <li class="mb-2"><strong>Жанр:</strong> {{ movie.genre or 'Не указан' }}</li>
+                    <li class="mb-2"><strong>Рейтинг:</strong> {{ movie.rating if movie.rating > 0 else 'Пока нет оценок' }}/10</li>
+                    <li class="mb-2"><strong>Категория:</strong> {{ movie.category or 'Не указана' }}</li>
+                </ul>
+            </div>
+        </div>
+        
+        <!-- Секция комментариев -->
+        <div class="card mt-3">
+            <div class="card-body">
+                <h5>Комментарии ({{ movie.comments.count() }})</h5>
+                
+                {% if current_user.is_authenticated %}
+                <form method="POST" action="{{ url_for('main.add_comment', movie_id=movie.id) }}" class="mb-4">
+                    <div class="mb-2">
+                        <textarea name="comment" class="form-control" rows="3" 
+                                  placeholder="Оставьте ваш комментарий..." maxlength="500"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary" style="background-color: #8B7355; border-color: #8B7355;">
+                        <i class="bi bi-chat-dots"></i> Отправить
+                    </button>
+                </form>
+                {% else %}
+                <div class="alert alert-info mb-4">
+                    <a href="{{ url_for('main.login') }}" class="alert-link">Войдите</a>, чтобы оставить комментарий.
+                </div>
+                {% endif %}
+                
+                <div class="comments-section" style="max-height: 500px; overflow-y: auto;">
+                    {% if movie.comments.count() > 0 %}
+                        {% for comment in movie.comments %}
+                        <div class="comment-item d-flex mb-3 p-2 border-bottom">
+                            <img src="{{ url_for('static', filename='uploads/' + comment.author.avatar) }}" 
+                                 alt="{{ comment.author.username }}" 
+                                 class="rounded-circle me-2"
+                                 style="width: 40px; height: 40px; object-fit: cover;">
+                            <div class="flex-grow-1">
+                                <div class="d-flex justify-content-between">
+                                    <strong class="text-dark">{{ comment.author.username }}</strong>
+                                    <small class="text-muted">{{ comment.created_at.strftime('%d.%m.%Y %H:%M') }}</small>
+                                </div>
+                                <p class="mb-0 mt-1">{{ comment.text }}</p>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    {% else %}
+                    <p class="text-muted text-center">Пока нет комментариев. Будьте первым!</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4">
+        <div class="card mb-3">
+            <div class="card-body text-center">
+                <div class="movie-cover-container mb-3 mx-auto" style="width: 100%; max-width: 280px; aspect-ratio: 2/3; overflow: hidden; border-radius: 8px;">
+                    <img src="{{ url_for('static', filename='uploads/' + movie.cover) }}" 
+                         alt="{{ movie.title }}" 
+                         class="w-100 h-100"
+                         style="object-fit: contain; background-color: #000;"
+                         onerror="this.onerror=null; this.src='{{ url_for('static', filename='uploads/default_cover.jpg') }}';">
+                </div>
+                
+                {% if movie.folder_id %}
+                <a href="#player-section" class="btn btn-primary w-100 mb-2" style="background-color: #8B7355; border-color: #8B7355;" onclick="switchPlayer('movie')">
+                    <i class="bi bi-play-fill"></i> Смотреть
+                </a>
+                {% endif %}
+                
+                {% if movie.trailer_id %}
+                <a href="#player-section" class="btn btn-outline-primary w-100 mb-2" style="border-color: #8B7355; color: #8B7355;" onclick="switchPlayer('trailer')">
+                    <i class="bi bi-play-circle"></i> Трейлер
+                </a>
+                {% endif %}
+                
+                <!-- Секция оценок -->
+                <div class="rating-section mt-3 p-3 bg-light rounded">
+                    <h6 class="mb-2">Оцените фильм</h6>
+                    
+                    {% if current_user.is_authenticated %}
+                    <form method="POST" action="{{ url_for('main.rate_movie', movie_id=movie.id) }}" id="rating-form">
+                        <div class="star-rating mb-2">
+                            {% for i in range(10, 0, -1) %}
+                            <input type="radio" id="star{{ i }}" name="score" value="{{ i }}" 
+                                   {% if user_rating == i %}checked{% endif %}>
+                            <label for="star{{ i }}" title="{{ i }}/10">★</label>
+                            {% endfor %}
+                        </div>
+                        <div class="text-muted small mb-2">
+                            {% if user_rating %}
+                            Ваша оценка: {{ user_rating }}/10
+                            {% else %}
+                            Вы ещё не оценили
+                            {% endif %}
+                        </div>
+                        <button type="submit" class="btn btn-sm btn-primary" style="background-color: #8B7355; border-color: #8B7355;">
+                            Сохранить оценку
+                        </button>
+                    </form>
+                    {% else %}
+                    <p class="text-muted small">
+                        <a href="{{ url_for('main.login') }}">Войдите</a>, чтобы оценить фильм.
+                    </p>
+                    {% endif %}
+                    
+                    <div class="mt-2">
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Средняя оценка:</small>
+                            <strong>{{ movie.rating if movie.rating > 0 else '—' }}/10</strong>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <small class="text-muted">Всего оценок:</small>
+                            <strong>{{ movie.ratings.count() }}</strong>
+                        </div>
+                    </div>
+                </div>
+                
+                {% if current_user.is_authenticated %}
+                <button id="favorite-btn" class="btn w-100 mt-2 {% if current_user.is_favorite(movie) %}btn-danger{% else %}btn-outline-secondary{% endif %}" 
+                        onclick="toggleFavorite({{ movie.id }})">
+                    <i class="bi {% if current_user.is_favorite(movie) %}bi-heart-fill{% else %}bi-heart{% endif %}"></i>
+                    <span id="favorite-text">{% if current_user.is_favorite(movie) %}В избранном{% else %}В избранное{% endif %}</span>
+                </button>
+                {% else %}
+                <a href="{{ url_for('main.login') }}" class="btn btn-outline-secondary w-100 mt-2">
+                    <i class="bi bi-heart"></i> Войдите, чтобы добавить в избранное
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="card">
+            <div class="card-body">
+                <h5>Похожие фильмы</h5>
+                {% if similar_movies %}
+                <div class="row">
+                    {% for similar in similar_movies %}
+                    <div class="col-6 mb-2">
+                        <a href="{{ url_for('main.movie_detail', movie_id=similar.id) }}" class="text-decoration-none">
+                            <div class="card similar-card">
+                                <div class="card-body p-2 text-center">
+                                    <small class="d-block text-dark"><strong>{{ similar.title }}</strong></small>
+                                    <small class="text-muted">{{ similar.year }} | ★ {{ similar.rating }}</small>
+                                </div>
+                            </div>
+                        </a>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <p class="text-muted small">Похожих фильмов пока нет.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function switchPlayer(type) {
+    const moviePlayer = document.getElementById('movie-player');
+    const trailerPlayer = document.getElementById('trailer-player');
+    const btnMovie = document.getElementById('btn-movie');
+    const btnTrailer = document.getElementById('btn-trailer');
+    
+    if (type === 'movie') {
+        moviePlayer.classList.remove('d-none');
+        trailerPlayer.classList.add('d-none');
+        btnMovie.classList.add('active');
+        btnMovie.style.backgroundColor = '#8B7355';
+        btnMovie.style.borderColor = '#8B7355';
+        btnMovie.style.color = 'white';
+        btnTrailer.classList.remove('active');
+        btnTrailer.style.backgroundColor = 'transparent';
+        btnTrailer.style.borderColor = '#8B7355';
+        btnTrailer.style.color = '#8B7355';
+    } else {
+        moviePlayer.classList.add('d-none');
+        trailerPlayer.classList.remove('d-none');
+        btnTrailer.classList.add('active');
+        btnTrailer.style.backgroundColor = '#8B7355';
+        btnTrailer.style.borderColor = '#8B7355';
+        btnTrailer.style.color = 'white';
+        btnMovie.classList.remove('active');
+        btnMovie.style.backgroundColor = 'transparent';
+        btnMovie.style.borderColor = '#8B7355';
+        btnMovie.style.color = '#8B7355';
+    }
+}
+
+function toggleFavorite(movieId) {
+    fetch(`/toggle_favorite/${movieId}`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        const btn = document.getElementById('favorite-btn');
+        const icon = btn.querySelector('i');
+        const text = document.getElementById('favorite-text');
+        
+        if (data.status === 'added') {
+            btn.className = 'btn btn-danger w-100';
+            icon.className = 'bi bi-heart-fill';
+            text.textContent = 'В избранном';
+        } else {
+            btn.className = 'btn btn-outline-secondary w-100';
+            icon.className = 'bi bi-heart';
+            text.textContent = 'В избранное';
+        }
+    })
+    .catch(error => console.error('Error:', error));
+}
+</script>
+{% endblock %}

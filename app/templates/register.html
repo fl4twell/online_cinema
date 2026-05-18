@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-8">
+        <div class="card shadow-sm">
+            <div class="card-body p-4">
+                <h3 class="card-title text-center mb-4">Регистрация</h3>
+                
+                <form method="POST" enctype="multipart/form-data">
+                    <!-- Аватарка -->
+                    <div class="text-center mb-4">
+                        <img id="avatar-preview" src="{{ url_for('static', filename='uploads/default_avatar.png') }}" 
+                             class="avatar-preview mb-2" style="width: 120px; height: 120px; object-fit: cover; border-radius: 50%; border: 3px solid #8B7355;">
+                        <div>
+                            <label for="avatar" class="btn btn-sm btn-outline-secondary">
+                                📷 Загрузить аватар
+                            </label>
+                            <input type="file" id="avatar" name="avatar" accept="image/*" style="display: none;" onchange="previewAvatar(event)">
+                        </div>
+                    </div>
+                    
+                    <!-- Имя пользователя -->
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Имя пользователя *</label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               placeholder="Минимум 3 символа" minlength="3"
+                               value="{{ request.form.username if request.form.username }}">
+                    </div>
+                    
+                    <!-- Пароль -->
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Пароль *</label>
+                        <input type="password" class="form-control" id="password" name="password" required 
+                               placeholder="Минимум 6 символов, буквы и цифры" minlength="6">
+                        <small class="text-muted">Пароль должен содержать хотя бы одну букву и одну цифру</small>
+                    </div>
+                    
+                    <!-- Возраст -->
+                    <div class="mb-3">
+                        <label for="age" class="form-label">Возраст</label>
+                        <input type="number" class="form-control" id="age" name="age" min="1" max="120" 
+                               placeholder="Ваш возраст"
+                               value="{{ request.form.age if request.form.age }}">
+                    </div>
+                    
+                    <!-- Пол -->
+                    <div class="mb-3">
+                        <label class="form-label">Пол</label>
+                        <div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="male" value="male"
+                                       {{ 'checked' if request.form.gender == 'male' }}>
+                                <label class="form-check-label" for="male">Мужской</label>
+                            </div>
+                            <div class="form-check form-check-inline">
+                                <input class="form-check-input" type="radio" name="gender" id="female" value="female"
+                                       {{ 'checked' if request.form.gender == 'female' }}>
+                                <label class="form-check-label" for="female">Женский</label>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Любимые жанры -->
+                    <div class="mb-3">
+                        <label class="form-label">Выберите 3 любимых жанра</label>
+                        <div class="row">
+                            {% for genre in genres %}
+                            <div class="col-6 col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input genre-checkbox" type="checkbox" 
+                                           name="favorite_genres" value="{{ genre }}" id="genre_{{ loop.index }}"
+                                           {{ 'checked' if genre in request.form.getlist('favorite_genres') }}>
+                                    <label class="form-check-label" for="genre_{{ loop.index }}">
+                                        {{ genre }}
+                                    </label>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                        <small class="text-muted">Можно выбрать до 3 жанров</small>
+                    </div>
+                    
+                    <div class="d-grid gap-2">
+                        <button type="submit" class="btn btn-primary" style="background-color: #8B7355; border-color: #8B7355;">
+                            Зарегистрироваться
+                        </button>
+                    </div>
+                </form>
+                
+                <div class="text-center mt-3">
+                    <p>Уже есть аккаунт? <a href="{{ url_for('main.login') }}">Войти</a></p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Предпросмотр аватарки
+function previewAvatar(event) {
+    const reader = new FileReader();
+    reader.onload = function() {
+        const preview = document.getElementById('avatar-preview');
+        preview.src = reader.result;
+    }
+    reader.readAsDataURL(event.target.files[0]);
+}
+
+// Ограничение на выбор 3 жанров
+document.addEventListener('DOMContentLoaded', function() {
+    const checkboxes = document.querySelectorAll('.genre-checkbox');
+    checkboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const checked = document.querySelectorAll('.genre-checkbox:checked');
+            if (checked.length > 3) {
+                this.checked = false;
+                alert('Можно выбрать не более 3 жанров!');
+            }
+        });
+    });
+});
+</script>
+{% endblock %}

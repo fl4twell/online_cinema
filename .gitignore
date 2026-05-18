@@ -1,0 +1,8 @@
+instance/cinema.db 
+__pycache__/ 
+*.pyc 
+venv/ 
+.env 
+dist/ 
+build/ 
+*.spec 

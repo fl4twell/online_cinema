@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Онлайн-кинотеатр – {{ title }}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.0/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body class="beige-theme">
+    <!-- Верхняя панель навигации -->
+    <nav class="navbar navbar-expand-lg navbar-dark" style="background-color: #8B7355;">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/new">
+                <span class="logo-placeholder">🎬</span> КиноМир
+            </a>
+            <div class="ms-auto d-flex align-items-center">
+                {% if current_user.is_authenticated %}
+                    <div class="user-profile">
+                        <img src="{{ url_for('static', filename='uploads/' + current_user.avatar) }}" 
+                             alt="Аватар" class="user-avatar">
+                        <span class="text-light ms-2">{{ current_user.username }}</span>
+                        <a href="{{ url_for('main.logout') }}" class="btn btn-outline-light btn-sm ms-3">Выйти</a>
+                    </div>
+                {% else %}
+                    <a href="{{ url_for('main.register') }}" class="btn btn-outline-light">Зарегистрироваться</a>
+                    <a href="{{ url_for('main.login') }}" class="btn btn-outline-light ms-2">Войти</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Вкладки -->
+    <ul class="nav nav-tabs px-3 pt-2" style="background-color: #F5DEB3;">
+        <li class="nav-item">
+            <a class="nav-link {% if current_tab == 'new' %}active{% endif %}" href="/new">Новое</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_tab == 'popular' %}active{% endif %}" href="/popular">Популярное</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_tab == 'films' %}active{% endif %}" href="/films">Фильмы</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link {% if current_tab == 'series' %}active{% endif %}" href="/series">Сериалы</a>
+        </li>
+        {% if current_user.is_authenticated %}
+        <li class="nav-item">
+            <a class="nav-link {% if current_tab == 'favorites' %}active{% endif %}" href="/favorites">
+                <i class="bi bi-heart-fill text-danger"></i> Избранное
+            </a>
+        </li>
+        {% endif %}
+    </ul>
+
+    <!-- Основной блок: сайдбар + контент -->
+    <div class="container-fluid">
+        <div class="row">
+            <!-- Левая боковая панель -->
+            <div class="col-md-3 sidebar bg-beige p-3">
+                <form action="{{ url_for('main.search') }}" method="GET" class="mb-3">
+                    <div class="input-group">
+                        <input type="text" name="query" class="form-control" 
+                               placeholder="Поиск фильма или сериала..." 
+                               value="{{ search_query if search_query }}">
+                        <button class="btn btn-outline-secondary" type="submit">
+                            <i class="bi bi-search"></i>
+                        </button>
+                    </div>
+                </form>
+                
+                <h5>Категории</h5>
+                <ul class="list-unstyled genre-list">
+                    {% for genre in genres %}
+                    <li>
+                        <a href="{{ url_for('main.by_genre', genre_name=genre) }}" class="genre-item d-block text-decoration-none">
+                            {{ genre }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                </ul>
+            </div>
+
+            <!-- Основная область с карточками фильмов -->
+            <div class="col-md-9 content-area p-3">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        {% for category, message in messages %}
+                            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                                {{ message }}
+                                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                            </div>
+                        {% endfor %}
+                    {% endif %}
+                {% endwith %}
+                
+                <h2 class="mb-3">{{ title }}</h2>
+                {% block content %}{% endblock %}
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

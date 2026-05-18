@@ -1,0 +1,12 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Загрузка обложки фильма</h2>
+<form method="post" enctype="multipart/form-data" class="mt-3">
+    <div class="mb-3">
+        <label for="cover" class="form-label">Выберите файл изображения</label>
+        <input type="file" class="form-control" id="cover" name="cover" accept="image/*">
+    </div>
+    <button type="submit" class="btn btn-warning">Загрузить</button>
+</form>
+<p class="mt-2"><small>После загрузки файл сохраняется в static/uploads и появляется новый фильм.</small></p>
+{% endblock %}
